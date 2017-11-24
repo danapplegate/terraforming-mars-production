@@ -40,7 +40,7 @@ class ResourceBoard extends Component {
   constructor(props) {
     super(props);
     this.resourceNames = ['megacredits', 'steel', 'titanium', 'plants', 'energy', 'heat'];
-    let poolState = {};
+    let poolState = {tr: 20};
     this.resourceNames.forEach((name) => {
       poolState[name + '-pool'] = 0;
       poolState[name + '-production'] = 0;
@@ -65,10 +65,17 @@ class ResourceBoard extends Component {
     this.setState((prevState) => {
       let updates = {};
       this.resourceNames.forEach((name) => {
+        // Do these specially
+        if (name === 'energy' || name === 'heat') {
+          return;
+        }
         const poolName = name + '-pool';
         const prodName = name + '-production';
         updates[poolName] = prevState[poolName] + prevState[prodName];
       });
+      updates['heat-pool'] = prevState['heat-pool'] + prevState['energy-pool'] + prevState['heat-production'];
+      updates['energy-pool'] = prevState['energy-production'];
+      updates['megacredits-pool'] += prevState['tr'];
       return updates;
     });
   }
@@ -92,7 +99,10 @@ class ResourceBoard extends Component {
           {resourcePools}
           {resourceProductions}
         </div>
-        <DoProduction onDoProduction={this.onDoProduction} />
+        <div className="game-buttons">
+          <Resource key="tr" name="tr" amount={this.state.tr} onAmountChange={this.changeAmount("tr")} />
+          <DoProduction onDoProduction={this.onDoProduction} />
+        </div>
       </div>
     );
   }

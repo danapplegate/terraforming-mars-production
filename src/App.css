@@ -10,9 +10,8 @@
 }
 
 .resource-info .number {
-	color: red;
+	color: yellow;
 	font-size: 10vw;
-	text-shadow: .1em .1em .2em black;
 }
 
 .resource-info button {
@@ -22,7 +21,7 @@
 
 .Resource .number {
 	font-size: 8vw;
-	text-shadow: .05em .05em .1em black;
+	text-shadow: black 1px 1px 2px;
 }
 
 .ResourceBoard {
@@ -122,6 +121,23 @@
 	padding-top: 19.0%;
 	top: 70%;
 	left: 66.2%;
+}
+
+.Resource.tr {
+	background-image: url(tr-icon.jpg);
+	background-repeat: no-repeat;
+	background-size: contain;
+	width: 20%;
+	padding-top: 15%;
+	left: 10vw;
+}
+
+.Resource.tr .resource-info {
+	left: 0;
+}
+
+.Resource.tr .resource-info .number {
+	color: white;
 }
 
 button.do-production {
