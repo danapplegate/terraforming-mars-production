@@ -30,10 +30,15 @@ class Resource extends Component {
   }
 }
 
+function DoProduction(props) {
+    return (
+        <button className="do-production" onClick={props.onDoProduction}>Do Production</button>
+    );
+}
+
 class ResourceBoard extends Component {
   constructor(props) {
     super(props);
-    this.changeAmount = this.changeAmount.bind(this);
     this.resourceNames = ['megacredits', 'steel', 'titanium', 'plants', 'energy', 'heat'];
     let poolState = {};
     this.resourceNames.forEach((name) => {
@@ -41,6 +46,8 @@ class ResourceBoard extends Component {
       poolState[name + '-production'] = 0;
     });
     this.state = poolState;
+    this.changeAmount = this.changeAmount.bind(this);
+    this.onDoProduction = this.onDoProduction.bind(this);
   }
 
   changeAmount(poolName) {
@@ -52,6 +59,18 @@ class ResourceBoard extends Component {
         return update;
       });
     };
+  }
+
+  onDoProduction() {
+    this.setState((prevState) => {
+      let updates = {};
+      this.resourceNames.forEach((name) => {
+        const poolName = name + '-pool';
+        const prodName = name + '-production';
+        updates[poolName] = prevState[poolName] + prevState[prodName];
+      });
+      return updates;
+    });
   }
 
   render() {
@@ -73,6 +92,7 @@ class ResourceBoard extends Component {
           {resourcePools}
           {resourceProductions}
         </div>
+        <DoProduction onDoProduction={this.onDoProduction} />
       </div>
     );
   }
