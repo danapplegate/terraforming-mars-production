@@ -1,6 +1,30 @@
 import React, { Component } from 'react';
 import './App.css';
 
+function storageAvailable(type) {
+    try {
+        var storage = window[type],
+            x = '__storage_test__';
+        storage.setItem(x, x);
+        storage.removeItem(x);
+        return true;
+    }
+    catch(e) {
+        return e instanceof DOMException && (
+            // everything except Firefox
+            e.code === 22 ||
+            // Firefox
+            e.code === 1014 ||
+            // test name field too, because code might not be present
+            // everything except Firefox
+            e.name === 'QuotaExceededError' ||
+            // Firefox
+            e.name === 'NS_ERROR_DOM_QUOTA_REACHED') &&
+            // acknowledge QuotaExceededError only if there's something already stored
+            storage.length !== 0;
+    }
+}
+
 class Resource extends Component {
   constructor(props) {
     super(props);
@@ -31,9 +55,15 @@ class Resource extends Component {
 }
 
 function DoProduction(props) {
-    return (
-        <button className="do-production" onClick={props.onDoProduction}>Do Production</button>
-    );
+  return (
+    <button className="do-production" onClick={props.onDoProduction}>Do Production</button>
+  );
+}
+
+function Reset(props) {
+  return (
+    <button className="reset" onClick={props.onReset}>Reset Game</button>
+  );
 }
 
 class ResourceBoard extends Component {
@@ -45,9 +75,18 @@ class ResourceBoard extends Component {
       poolState[name + '-pool'] = 0;
       poolState[name + '-production'] = 0;
     });
+    this.gameStateKey = '__terraforming-mars-game-state__';
     this.state = poolState;
+    this.initialState = Object.assign({}, poolState);
     this.changeAmount = this.changeAmount.bind(this);
     this.onDoProduction = this.onDoProduction.bind(this);
+    this.onReset = this.onReset.bind(this);
+
+    if (storageAvailable('localStorage')) {
+      this.localStorage = window.localStorage;
+    } else {
+      this.localStorage = null;
+    }
   }
 
   changeAmount(poolName) {
@@ -59,6 +98,42 @@ class ResourceBoard extends Component {
         return update;
       });
     };
+  }
+
+  componentDidMount() {
+    if (this.localStorage) {
+      console.log('Checking local storage for game state...');
+      let gameState = localStorage.getItem(this.gameStateKey);
+      if (gameState) {
+        console.log('Game state found, attempting to parse JSON');
+        try {
+          gameState = JSON.parse(gameState);
+        } catch (e) {
+          if (e instanceof SyntaxError) {
+            console.log('Invalid JSON state stored, clearing');
+            localStorage.removeItem(this.gameStateKey);
+          } else {
+            throw e;
+          }
+        }
+        console.log('Successfully restored game state:');
+        console.log(gameState);
+        this.setState(gameState);
+      } else {
+        console.log('No game state found');
+      }
+    } else {
+      console.log('Local storage not enabled, skipping game state load');
+    }
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    if (this.localStorage) {
+      console.log('Saving game state...');
+      localStorage.setItem(this.gameStateKey, JSON.stringify(this.state));
+    } else {
+      console.log('Local storage not enabled, skipping game state save');
+    }
   }
 
   onDoProduction() {
@@ -78,6 +153,10 @@ class ResourceBoard extends Component {
       updates['megacredits-pool'] += prevState['tr'];
       return updates;
     });
+  }
+
+  onReset() {
+    this.setState(this.initialState);
   }
 
   render() {
@@ -102,6 +181,7 @@ class ResourceBoard extends Component {
         <div className="game-buttons">
           <Resource key="tr" name="tr" amount={this.state.tr} onAmountChange={this.changeAmount("tr")} />
           <DoProduction onDoProduction={this.onDoProduction} />
+          <Reset onReset={this.onReset} />
         </div>
       </div>
     );
